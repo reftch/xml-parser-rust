@@ -1,0 +1,6 @@
+<inlinemediaobject>
+    <alt>Image Test</alt>
+    <imageobject>
+        <imagedata fileref="images/test.png" />
+    </imageobject>
+</inlinemediaobject>
