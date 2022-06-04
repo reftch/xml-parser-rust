@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
 
@@ -9,16 +8,18 @@ use xml::name::OwnedName;
 use xml::reader::{EventReader, XmlEvent};
 use xml::ParserConfig;
 
+use crate::config::entities::Entities;
+
 use super::xmltag::XmlTag;
 
 pub struct XmlDocument {
     source: File,
-    entities: HashMap<String, String>,
+    entities: Entities,
     debug: bool,
 }
 
 impl XmlDocument {
-    pub fn new(source: String, entities: HashMap<String, String>, debug: bool) -> Self {
+    pub fn new(source: String, entities: Entities, debug: bool) -> Self {
         Self {
             source: File::open(source).expect("Error opening file"),
             entities,
@@ -29,14 +30,8 @@ impl XmlDocument {
     pub fn parse(&self) -> String {
         let mut builder = Builder::default();
 
-        // added xml entities from configuration file
-        let mut config = ParserConfig::new();
-        for (k, v) in self.entities.iter() {
-            config = config.add_entity(k, v);
-        }
-
         let file = BufReader::new(&self.source);
-        let parser = EventReader::new_with_config(file, config);
+        let parser = EventReader::new_with_config(file, self.get_config());
 
         let mut depth = 0;
         let mut parent_tag = XmlTag::Unknown;
@@ -91,19 +86,27 @@ impl XmlDocument {
         }
     }
 
+    fn get_config(&self) -> ParserConfig {
+        let mut config = ParserConfig::new();
+        for (k, v) in self.entities.entities.iter() {
+            config = config.add_entity(k, v);
+        }
+        config
+    }
+
     pub fn indent(size: usize) -> String {
-        const INDENT: &'static str = "    ";
+        const INDENT: &str = "    ";
         (0..size)
             .map(|_| INDENT)
             .fold(String::with_capacity(size * INDENT.len()), |r, s| r + s)
     }
 
-    fn start_element(name: &OwnedName, tag: &XmlTag, attributes: &Vec<OwnedAttribute>) -> String {
+    fn start_element(name: &OwnedName, tag: &XmlTag, attributes: &[OwnedAttribute]) -> String {
         let xml_tag = XmlTag::new(name.local_name.as_str());
         match xml_tag {
             XmlTag::Title => XmlDocument::get_title(tag),
             XmlTag::Paragraph => XmlDocument::get_paragraph(tag),
-            XmlTag::ImageData => XmlDocument::get_image(&attributes),
+            XmlTag::ImageData => XmlDocument::get_image(attributes),
             XmlTag::GuiLabel => String::from(" *"),
             XmlTag::GuiMenu => String::from(" *"),
             XmlTag::GuiSubMenu => String::from(" *-> "),
@@ -130,30 +133,29 @@ impl XmlDocument {
     }
 
     fn get_title(tag: &XmlTag) -> String {
-        if tag == &XmlTag::Sect1 {
-            String::from("\n### ")
+        let expression = if tag == &XmlTag::Sect1 {
+            "\n### "
         } else {
-            String::from("## ")
-        }
+            "## "
+        };
+        String::from(expression)
     }
 
     fn get_paragraph(tag: &XmlTag) -> String {
-        if tag != &XmlTag::ListItem {
-            String::from("\n")
-        } else {
-            String::from("")
-        }
+        let expression = if tag != &XmlTag::ListItem { "\n" } else { "" };
+        String::from(expression)
     }
 
     fn get_list_item(tag: &XmlTag, parent_tag: &XmlTag) -> String {
-        if parent_tag == &XmlTag::ListItem && tag == &XmlTag::Paragraph {
-            String::from("+ ")
+        let expression = if parent_tag == &XmlTag::ListItem && tag == &XmlTag::Paragraph {
+            "+ "
         } else {
-            String::from("")
-        }
+            ""
+        };
+        String::from(expression)
     }
 
-    fn get_image(attributes: &Vec<OwnedAttribute>) -> String {
+    fn get_image(attributes: &[OwnedAttribute]) -> String {
         let attribute = &attributes.get(0);
         match attribute {
             Some(v) => format!("\n![An image](/{})", &v.value),
@@ -168,64 +170,114 @@ mod tests {
 
     #[test]
     fn test_parse_primary_title() {
-        let entities: HashMap<String, String> = HashMap::new();
-        let xml_document = XmlDocument::new(String::from("tests/documents/test1.xml"), entities, false);
+        let entities = Entities {
+            ..Default::default()
+        };
+        let xml_document =
+            XmlDocument::new(String::from("tests/documents/test1.xml"), entities, false);
         assert_eq!(xml_document.parse(), "## Test\n");
     }
 
     #[test]
     fn test_parse_secondary_title() {
-        let entities: HashMap<String, String> = HashMap::new();
-        let xml_document = XmlDocument::new(String::from("tests/documents/test2.xml"), entities, false);
+        let entities = Entities {
+            ..Default::default()
+        };
+        let xml_document =
+            XmlDocument::new(String::from("tests/documents/test2.xml"), entities, false);
         assert_eq!(xml_document.parse(), "\n### Test\n");
     }
 
     #[test]
     fn test_parse_paragraph_in_items() {
-        let entities: HashMap<String, String> = HashMap::new();
-        let xml_document = XmlDocument::new(String::from("tests/documents/test4.xml"), entities, false);
+        let entities = Entities {
+            ..Default::default()
+        };
+        let xml_document =
+            XmlDocument::new(String::from("tests/documents/test4.xml"), entities, false);
         assert_eq!(xml_document.parse(), "+ Test\n");
     }
 
     #[test]
     fn test_parse_guimenu() {
-        let entities: HashMap<String, String> = HashMap::new();
-        let xml_document = XmlDocument::new(String::from("tests/documents/test6.xml"), entities, false);
+        let entities = Entities {
+            ..Default::default()
+        };
+        let xml_document =
+            XmlDocument::new(String::from("tests/documents/test6.xml"), entities, false);
         assert_eq!(xml_document.parse(), " *Test* ");
     }
 
     #[test]
     fn test_parse_guisubmenu() {
-        let entities: HashMap<String, String> = HashMap::new();
-        let xml_document = XmlDocument::new(String::from("tests/documents/test7.xml"), entities, false);
+        let entities = Entities {
+            ..Default::default()
+        };
+        let xml_document =
+            XmlDocument::new(String::from("tests/documents/test7.xml"), entities, false);
         assert_eq!(xml_document.parse(), " *-> Menu1*  *-> Menu2* ");
     }
 
     #[test]
     fn test_parse_note() {
-        let entities: HashMap<String, String> = HashMap::new();
-        let xml_document = XmlDocument::new(String::from("tests/documents/test8.xml"), entities, false);
+        let entities = Entities {
+            ..Default::default()
+        };
+        let xml_document =
+            XmlDocument::new(String::from("tests/documents/test8.xml"), entities, false);
         assert_eq!(xml_document.parse(), "\n::: tip\nTest\n:::\n");
     }
 
     #[test]
     fn test_parse_productname() {
-        let entities: HashMap<String, String> = HashMap::new();
-        let xml_document = XmlDocument::new(String::from("tests/documents/test9.xml"), entities, false);
+        let entities = Entities {
+            ..Default::default()
+        };
+        let xml_document =
+            XmlDocument::new(String::from("tests/documents/test9.xml"), entities, false);
         assert_eq!(xml_document.parse(), " **Test** ");
     }
 
     #[test]
     fn test_parse_image_data() {
-        let entities: HashMap<String, String> = HashMap::new();
-        let xml_document = XmlDocument::new(String::from("tests/documents/test10.xml"), entities, false);
-        assert_eq!(xml_document.parse(),"Image Test\n![An image](/images/test.png)");
+        let entities = Entities {
+            ..Default::default()
+        };
+        let xml_document =
+            XmlDocument::new(String::from("tests/documents/test10.xml"), entities, false);
+        assert_eq!(
+            xml_document.parse(),
+            "Image Test\n![An image](/images/test.png)"
+        );
     }
 
     #[test]
     fn test_parse_empty_image_data() {
-        let entities: HashMap<String, String> = HashMap::new();
-        let xml_document = XmlDocument::new(String::from("tests/documents/test11.xml"), entities, false);
+        let entities = Entities {
+            ..Default::default()
+        };
+        let xml_document =
+            XmlDocument::new(String::from("tests/documents/test11.xml"), entities, false);
         assert_eq!(xml_document.parse(), "");
+    }
+
+    #[test]
+    fn test_process_xml_entities() {
+        let mut entities = Entities {
+            ..Default::default()
+        };
+        entities
+            .entities
+            .insert("spt".to_owned(), "Some Predicate Title".to_owned());
+        entities
+            .entities
+            .insert("ats".to_owned(), "another test string".to_owned());
+
+        let xml_document =
+            XmlDocument::new(String::from("tests/documents/test12.xml"), entities, false);
+        assert_eq!(
+            xml_document.parse(),
+            "## Test **Some Predicate Title** , another test string\n"
+        );
     }
 }

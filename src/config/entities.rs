@@ -1,14 +1,14 @@
 use config::{Config, File};
 use std::collections::HashMap;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 #[allow(unused)]
 pub struct Entities {
-    list: Vec<String>,
+   pub entities: HashMap<String, String>,
 }
 
 impl Entities {
-    pub fn new() -> HashMap<String, String> {
+    pub fn new() -> Self {
         let s = Config::builder()
             // This file shouldn't be checked in to git
             .add_source(File::with_name("config/entities").required(false))
@@ -16,6 +16,10 @@ impl Entities {
             .unwrap();
 
         // Deserialize (and thus freeze) the entire configuration as
-        s.try_deserialize::<HashMap<String, String>>().unwrap()
+        Entities { entities: s.try_deserialize::<HashMap<String, String>>().unwrap() }
+    }
+
+    pub fn clone(&self) -> Self {
+        Entities { entities: self.entities.clone() }
     }
 }

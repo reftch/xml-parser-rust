@@ -2,7 +2,6 @@
 #![warn(dead_code)]
 
 use std::{
-    collections::HashMap,
     fs::{create_dir_all, DirEntry},
     time::Instant,
 };
@@ -21,15 +20,15 @@ fn main() {
     let start_elapsed = Instant::now();
 
     let settings = Settings::new();
-    let entities: HashMap<String, String> = Entities::new();
+    let entities = Entities::new();
 
-    let debug = settings.get("debug").unwrap() == "true";
+    let debug = settings.settings.get("debug").unwrap() == "true";
 
     // create output directory
-    create_dir_all(settings.get("destination").unwrap()).expect("Error creating output directory");
+    create_dir_all(settings.settings.get("destination").unwrap()).expect("Error creating output directory");
 
     let mut entries: Vec<DirEntry> = Vec::new();
-    traverse_dirs(settings.get("sources").unwrap(), &mut entries);
+    traverse_dirs(settings.settings.get("sources").unwrap(), &mut entries);
 
     for entry in entries {
         println!("Processing file: {:?}", entry.file_name());
@@ -38,11 +37,16 @@ fn main() {
         let rows = xml_document.parse();
 
         // save file
-        utils::write_file(
-            String::from(settings.get("destination").unwrap())
+        let result = utils::write_file(
+            String::from(settings.settings.get("destination").unwrap())
                 + entry.file_name().to_str().unwrap(),
             rows,
         );
+
+        match result {
+            Ok(_) => {},
+            Err(e) => println!("Error saving file: {:?}", e),
+        }
     }
 
     println!("Time elapsed: {:?} ms", start_elapsed.elapsed().as_millis());
