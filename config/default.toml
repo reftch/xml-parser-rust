@@ -1,0 +1,6 @@
+#  General settings
+debug = false
+# XML sources directory
+sources = "xml"
+# Markdown output directory
+destination = "markdown/"

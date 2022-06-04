@@ -10,3 +10,4 @@ authors = ["Taras Chornyi <taras.chornyi@gmail.com>"]
 [dependencies]
 xml-rs = "0.8"
 string-builder = "0.2.0"
+config = "0.13.1"

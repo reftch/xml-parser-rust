@@ -2,38 +2,47 @@
 #![warn(dead_code)]
 
 use std::{
+    collections::HashMap,
     fs::{create_dir_all, DirEntry},
     time::Instant,
 };
 
+mod entities;
+mod settings;
 mod utils;
 mod xmldocument;
 mod xmltag;
 
 pub use xmldocument::XmlDocument;
 
+use entities::Entities;
+use settings::Settings;
 use utils::traverse_dirs;
-
-static DIR: &str = "xml";
-static OUTPUT_DIR: &str = "target/markdown/";
 
 fn main() {
     let start_elapsed = Instant::now();
 
+    let settings = Settings::new();
+    let entities: HashMap<String, String> = Entities::new();
+
+    let debug = settings.get("debug").unwrap() == "true";
+
     // create output directory
-    create_dir_all(&OUTPUT_DIR).expect("Error creating output directory");
+    create_dir_all(settings.get("destination").unwrap()).expect("Error creating output directory");
 
     let mut entries: Vec<DirEntry> = Vec::new();
-    traverse_dirs(DIR, &mut entries);
+    traverse_dirs(settings.get("sources").unwrap(), &mut entries);
 
     for entry in entries {
         println!("Processing file: {:?}", entry.file_name());
-        let xml_document = XmlDocument::new(entry.path().display().to_string(), false);
+        let xml_document =
+            XmlDocument::new(entry.path().display().to_string(), entities.clone(), debug);
         let rows = xml_document.parse();
 
         // save file
         utils::write_file(
-            String::from(OUTPUT_DIR) + entry.file_name().to_str().unwrap(),
+            String::from(settings.get("destination").unwrap())
+                + entry.file_name().to_str().unwrap(),
             rows,
         );
     }

@@ -3,3 +3,5 @@ xml
 formatter
 
 .DS_Store
+markdown
+config/entities.toml
