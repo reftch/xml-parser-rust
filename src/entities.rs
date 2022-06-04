@@ -15,8 +15,6 @@ impl Entities {
             .build()
             .unwrap();
 
-        // Now that we're done, let's access our configuration
-
         // Deserialize (and thus freeze) the entire configuration as
         s.try_deserialize::<HashMap<String, String>>().unwrap()
     }

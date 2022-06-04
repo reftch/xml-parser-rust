@@ -3,12 +3,6 @@ use std::collections::HashMap;
 
 #[derive(Debug)]
 #[allow(unused)]
-pub struct XmlEntities {
-    list: Vec<String>,
-}
-
-#[derive(Debug)]
-#[allow(unused)]
 pub struct Settings {
     debug: bool,
     sources: String,
@@ -32,3 +26,19 @@ impl Settings {
         s.try_deserialize::<HashMap<String, String>>().unwrap()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_settings() {
+        let settings = Settings::new();
+        assert_eq!(settings.len(), 3);
+        assert_eq!(settings.get("debug").unwrap() == "true", false);
+        assert_eq!(settings.get("sources").unwrap(), "xml");
+        assert_eq!(settings.get("destination").unwrap(), "markdown/");
+    }
+
+}
+
