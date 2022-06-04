@@ -10,13 +10,6 @@ pub fn get_source_filename(str: &String) -> &str {
     }
 }
 
-pub fn indent(size: usize) -> String {
-    const INDENT: &'static str = "    ";
-    (0..size)
-        .map(|_| INDENT)
-        .fold(String::with_capacity(size * INDENT.len()), |r, s| r + s)
-}
-
 pub fn write_file(source: String, rows: String) {
     let file_name = get_source_filename(&source);
     let mut destination = File::create(file_name.to_owned() + ".md").unwrap();

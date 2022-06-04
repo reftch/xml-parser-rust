@@ -9,8 +9,7 @@ use xml::name::OwnedName;
 use xml::reader::{EventReader, XmlEvent};
 use xml::ParserConfig;
 
-use crate::utils::indent;
-use crate::xmltag::XmlTag;
+use super::xmltag::XmlTag;
 
 pub struct XmlDocument {
     source: File,
@@ -88,8 +87,15 @@ impl XmlDocument {
 
     fn logging(&self, data: &str, sign: char, depth: &usize) {
         if self.debug {
-            println!("{}{}{}", indent(*depth), sign, data);
+            println!("{}{}{}", XmlDocument::indent(*depth), sign, data);
         }
+    }
+
+    pub fn indent(size: usize) -> String {
+        const INDENT: &'static str = "    ";
+        (0..size)
+            .map(|_| INDENT)
+            .fold(String::with_capacity(size * INDENT.len()), |r, s| r + s)
     }
 
     fn start_element(name: &OwnedName, tag: &XmlTag, attributes: &Vec<OwnedAttribute>) -> String {

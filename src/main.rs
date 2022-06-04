@@ -7,16 +7,14 @@ use std::{
     time::Instant,
 };
 
-mod entities;
-mod settings;
+mod config;
+mod parser;
 mod utils;
-mod xmldocument;
-mod xmltag;
 
-pub use xmldocument::XmlDocument;
+use crate::parser::xmldocument::XmlDocument;
+use crate::config::settings::Settings;
+use crate::config::entities::Entities;
 
-use entities::Entities;
-use settings::Settings;
 use utils::traverse_dirs;
 
 fn main() {
