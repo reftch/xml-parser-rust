@@ -35,23 +35,5 @@ pub fn traverse_dirs(dir: &str, files: &mut Vec<DirEntry>) {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_get_source_filename() {
-        assert_eq!(get_source_filename(&String::from("test.xml")), Some("test"));
-        assert_eq!(get_source_filename(&String::from("test")), None);
-    }
-
-    #[test]
-    fn test_traverse_dirs() {
-        let mut entries: Vec<DirEntry> = Vec::new();
-        traverse_dirs(".", &mut entries);
-        assert!(entries.len() > 0);
-
-        let mut entries: Vec<DirEntry> = Vec::new();
-        traverse_dirs("", &mut entries);
-        assert!(entries.len() == 0);
-    }
-}
+#[path = "../_tests/utils.rs"]
+mod tests;

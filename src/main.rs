@@ -13,8 +13,7 @@ mod utils;
 use crate::parser::xmldocument::XmlDocument;
 use crate::config::settings::Settings;
 use crate::config::entities::Entities;
-
-use utils::traverse_dirs;
+use crate::utils::traverse_dirs;
 
 fn main() {
     let start_elapsed = Instant::now();
@@ -27,10 +26,11 @@ fn main() {
     // create output directory
     create_dir_all(settings.settings.get("destination").unwrap()).expect("Error creating output directory");
 
-    let mut entries: Vec<DirEntry> = Vec::new();
-    traverse_dirs(settings.settings.get("sources").unwrap(), &mut entries);
+    let mut files: Vec<DirEntry> = Vec::new();
+    traverse_dirs(settings.settings.get("sources").unwrap(), &mut files);
 
-    for entry in entries {
+    for entry in files {
+        // processing file
         println!("Processing file: {:?}", entry.file_name());
         let xml_document =
             XmlDocument::new(entry.path().display().to_string(), entities.clone(), debug);
